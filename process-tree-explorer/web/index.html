@@ -1,0 +1,1087 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Process Tree Explorer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Schibsted+Grotesk:wght@600;800&display=swap">
+<style>
+/* Local offline fonts */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/ibm-plex-sans-400.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('fonts/ibm-plex-sans-500.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('fonts/ibm-plex-sans-600.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/jetbrains-mono-400.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('fonts/jetbrains-mono-600.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Schibsted Grotesk';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('fonts/schibsted-grotesk-600.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Schibsted Grotesk';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('fonts/schibsted-grotesk-800.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Layout: a workbench — scenario rail on top, tree canvas + inspector side by side, kernel-style event log beneath */
+:root{
+  --bg:#ECEFF4; --surface:#FFFFFF; --sunken:#E2E7EF; --ink:#141D2B; --muted:#596476; --line:#CCD4DF;
+  --accent:#2D55E0; --accent-soft:#DDE5FF; --on-accent:#FFFFFF;
+  --run:#14855A; --sleep:#6B7990; --idle:#A0ABBC; --zombie:#7F44C6; --zombie-soft:#EFE6FA;
+  --orphan:#C2691A; --orphan-soft:#FBEAD6; --stop:#C0353F;
+  --f-display:"Schibsted Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Ubuntu,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,"Cascadia Code","Fira Code",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E141E; --surface:#161F2D; --sunken:#111926; --ink:#E3E9F2; --muted:#93A0B4; --line:#2A3648;
+  --accent:#829FFF; --accent-soft:#1F2B4F; --on-accent:#0E141E;
+  --run:#40C98D; --sleep:#8F9CB1; --idle:#5E6A7E; --zombie:#B98EF2; --zombie-soft:#2A2142;
+  --orphan:#F2A253; --orphan-soft:#3A2916; --stop:#F2707A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E141E; --surface:#161F2D; --sunken:#111926; --ink:#E3E9F2; --muted:#93A0B4; --line:#2A3648;
+  --accent:#829FFF; --accent-soft:#1F2B4F; --on-accent:#0E141E;
+  --run:#40C98D; --sleep:#8F9CB1; --idle:#5E6A7E; --zombie:#B98EF2; --zombie-soft:#2A2142;
+  --orphan:#F2A253; --orphan-soft:#3A2916; --stop:#F2707A; color-scheme:dark}
+:root[data-theme="light"]{
+  --bg:#ECEFF4; --surface:#FFFFFF; --sunken:#E2E7EF; --ink:#141D2B; --muted:#596476; --line:#CCD4DF;
+  --accent:#2D55E0; --accent-soft:#DDE5FF; --on-accent:#FFFFFF;
+  --run:#14855A; --sleep:#6B7990; --idle:#A0ABBC; --zombie:#7F44C6; --zombie-soft:#EFE6FA;
+  --orphan:#C2691A; --orphan-soft:#FBEAD6; --stop:#C0353F; color-scheme:light}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px;
+  transition:background-color .2s,color .2s}
+.wrap{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono)}
+
+/* header */
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px}
+.brand h1{font:800 clamp(28px,4.4vw,44px)/1 var(--f-display);letter-spacing:-.02em;margin:0;text-wrap:balance}
+.brand h1 .pid{font:600 .42em var(--f-mono);color:var(--muted);letter-spacing:0;vertical-align:.55em;margin-left:.3em}
+.brand p{margin:8px 0 0;color:var(--muted);max-width:60ch}
+.brand p b{color:var(--ink);font-weight:600}
+.hdr-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:500;font-size:14px;display:inline-flex;align-items:center;gap:8px;min-height:38px;user-select:none;transition:background-color .15s,border-color .15s,color .15s}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.danger{color:var(--stop)}
+.btn.danger:hover{border-color:var(--stop)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* scenario rail */
+.rail{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;cursor:pointer;font-size:14px;font-weight:500;display:flex;gap:8px;align-items:center;white-space:nowrap;transition:all .15s}
+.chip .n{font:600 11px var(--f-mono);color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip[aria-pressed="true"] .n{color:inherit;opacity:.7}
+.chip.live::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--run);box-shadow:0 0 0 3px color-mix(in srgb,var(--run) 25%,transparent)}
+
+/* briefing */
+.brief{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 24px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 20px;transition:border-color .2s}
+.brief h2{font:700 20px/1.25 var(--f-display);margin:0 0 4px;text-wrap:balance}
+.brief p{margin:0;max-width:72ch;color:var(--muted)}
+.brief p.try{margin-top:8px;color:var(--ink)}
+.brief p.try::before{content:"Try  ";font:600 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.brief .eyebrow{font:600 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;display:block}
+.brief.tour{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.tour-nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.live-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+@media (max-width:720px){.brief{grid-template-columns:1fr}.tour-nav{justify-content:flex-start}}
+
+/* stats */
+.stats{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:baseline;font-size:13px;color:var(--muted)}
+.stat b{font:600 18px var(--f-mono);color:var(--ink);font-variant-numeric:tabular-nums;margin-right:5px}
+.stat.hot-z b{color:var(--zombie)}
+.stat.hot-o b{color:var(--orphan)}
+.legend{margin-left:auto;display:flex;gap:12px;flex-wrap:wrap;font-size:12px}
+.lg{display:inline-flex;gap:5px;align-items:center}
+.lg i{font:600 10px/16px var(--f-mono);width:16px;text-align:center;border-radius:3px;color:#fff;font-style:normal}
+.lg .dash{width:22px;height:0;border-top:2px dashed var(--orphan)}
+
+/* workspace */
+.work{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+@media (max-width:960px){.work{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-width:0}
+.canvas-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.canvas-head-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.seg{display:inline-flex;background:var(--sunken);border-radius:8px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+
+/* Search filter */
+.search-wrap{position:relative;display:inline-flex;align-items:center}
+.search-wrap input{border:1px solid var(--line);background:var(--sunken);border-radius:8px;padding:6px 26px 6px 10px;font:13px var(--f-mono);color:var(--ink);width:150px;transition:width .2s,border-color .2s}
+.search-wrap input:focus{width:200px;border-color:var(--accent);outline:none;background:var(--surface)}
+.search-wrap input[type="search"]::-webkit-search-decoration,
+.search-wrap input[type="search"]::-webkit-search-cancel-button,
+.search-wrap input[type="search"]::-webkit-search-results-button,
+.search-wrap input[type="search"]::-webkit-search-results-decoration{display:none;-webkit-appearance:none}
+.search-wrap .search-clear{position:absolute;right:8px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;display:none;padding:0}
+.search-wrap input:not(:placeholder-shown) + .search-clear{display:block}
+
+.stage{overflow:auto;height:clamp(380px,60vh,620px);background:
+  radial-gradient(circle at 1px 1px,var(--line) 1px,transparent 0) 0 0/22px 22px,var(--sunken);border-radius:0 0 12px 12px;position:relative;-webkit-overflow-scrolling:touch}
+.stage.fit svg{width:100%;height:auto}
+#graph{display:block}
+#graph text{font-family:var(--f-body)}
+.edge{fill:none;stroke:var(--line);stroke-width:1.6;transition:opacity .2s,stroke .2s}
+:root .edge{stroke:color-mix(in srgb,var(--muted) 55%,transparent)}
+.edge.lin{stroke:var(--accent);stroke-width:2.4}
+.edge.adopted{stroke:var(--orphan);stroke-dasharray:6 5;stroke-width:2}
+.edge-tag{font:600 9.5px var(--f-mono)!important;fill:var(--orphan);letter-spacing:.06em}
+#edges.redraw{animation:edgeIn .5s ease both}
+@keyframes edgeIn{0%,45%{opacity:0}100%{opacity:1}}
+#nodes g{cursor:pointer;transition:transform .45s cubic-bezier(.2,.7,.2,1),opacity .35s,filter .2s}
+#nodes g.leaving{opacity:0}
+#nodes .card{fill:var(--surface);stroke:var(--line);stroke-width:1.2;transition:stroke .15s,stroke-width .15s}
+#nodes g:hover .card{stroke:var(--accent)}
+#nodes g.sel .card{stroke:var(--accent);stroke-width:2.5}
+#nodes g.lin:not(.sel) .card{stroke:var(--accent)}
+#nodes g:focus{outline:none}
+#nodes g:focus-visible .card{stroke:var(--accent);stroke-width:3}
+#nodes .badge{fill:var(--sleep)}
+#nodes .letter{font:600 13px var(--f-mono)!important;fill:#fff;text-anchor:middle}
+#nodes .nm{font-weight:600;font-size:13px;fill:var(--ink)}
+#nodes .mt{font:400 10.5px var(--f-mono)!important;fill:var(--muted)}
+#nodes .adot{fill:var(--orphan);display:none}
+#nodes g.adopted .adot{display:block}
+#nodes g.adopted .card{stroke:var(--orphan)}
+#nodes g.st-R .badge{fill:var(--run)}
+#nodes g.st-I .badge{fill:var(--idle)}
+#nodes g.st-T .badge{fill:var(--stop)}
+#nodes g.st-Z .badge{fill:var(--zombie)}
+#nodes g.st-Z .card{fill:var(--zombie-soft);stroke:var(--zombie);stroke-dasharray:4 3}
+#nodes g.st-Z .nm{fill:var(--zombie)}
+#nodes g.kernel .nm{fill:var(--muted);font-style:italic}
+#nodes g.st-R .badge{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.6}}
+
+/* Node search highlighting */
+#nodes g.dimmed{opacity:0.22;filter:grayscale(60%)}
+#nodes g.matched .card{stroke:var(--accent);stroke-width:2.8;filter:drop-shadow(0 0 6px var(--accent-soft))}
+
+.textview{font:13px/1.65 var(--f-mono);padding:16px;white-space:pre;min-width:max-content}
+.textview div{cursor:pointer;border-radius:4px;padding:0 6px;transition:opacity .15s}
+.textview div:hover{background:var(--accent-soft)}
+.textview div.sel{background:var(--accent-soft);outline:1px solid var(--accent)}
+.textview div.dimmed{opacity:0.25}
+.textview div.matched{background:var(--accent-soft);font-weight:600}
+.textview .z{color:var(--zombie)}
+.textview .o{color:var(--orphan)}
+.textview .r{color:var(--run)}
+.textview .k{color:var(--muted)}
+.textview .tree{color:var(--muted)}
+
+table.ps{border-collapse:collapse;font:12.5px/1.4 var(--f-mono);width:100%;min-width:620px;background:var(--surface)}
+table.ps th{position:sticky;top:0;background:var(--surface);text-align:left;font-weight:600;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--line)}
+table.ps td{padding:5px 10px;border-bottom:1px solid var(--sunken);white-space:nowrap;font-variant-numeric:tabular-nums;transition:opacity .15s}
+table.ps td.num{text-align:right}
+table.ps tr{cursor:pointer}
+table.ps tbody tr:hover td{background:var(--accent-soft)}
+table.ps tr.sel td{background:var(--accent-soft)}
+table.ps tr.dimmed{opacity:0.25}
+table.ps tr.matched td{background:var(--accent-soft);font-weight:600}
+table.ps tr.z td{color:var(--zombie)}
+table.ps .tag{font-size:10px;color:var(--orphan);margin-left:6px;letter-spacing:.04em}
+
+/* inspector */
+.insp{padding:18px;display:flex;flex-direction:column;gap:14px}
+.insp h3{font:700 22px/1.15 var(--f-display);margin:0;word-break:break-word}
+.insp code.cmd{display:block;font:12px/1.5 var(--f-mono);color:var(--muted);background:var(--sunken);padding:8px 10px;border-radius:6px;word-break:break-all}
+.pill{display:inline-flex;gap:6px;align-items:center;font:600 12px var(--f-mono);padding:3px 9px;border-radius:999px;color:#fff;background:var(--sleep);width:max-content}
+.pill.st-R{background:var(--run)}.pill.st-I{background:var(--idle)}.pill.st-T{background:var(--stop)}.pill.st-Z{background:var(--zombie)}
+.pill.adopt{background:var(--orphan)}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+dl.facts{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0;font-size:13.5px}
+dl.facts dt{color:var(--muted)}
+dl.facts dd{margin:0;font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums}
+.link{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;font:inherit;text-decoration:underline;text-underline-offset:2px}
+.explain{font-size:14px;margin:0;color:var(--ink)}
+.explain.z{background:var(--zombie-soft);border-radius:8px;padding:10px 12px}
+.explain.o{background:var(--orphan-soft);border-radius:8px;padding:10px 12px}
+.crumbs{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font:12px var(--f-mono)}
+.crumbs button{border:1px solid var(--line);background:var(--surface);border-radius:5px;padding:2px 6px;cursor:pointer;font:inherit}
+.crumbs button:hover{border-color:var(--accent)}
+.crumbs span{color:var(--muted)}
+.label{font:600 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.actions{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row input[type=text]{flex:1;min-width:0;border:1px solid var(--line);background:var(--sunken);border-radius:8px;padding:8px 10px;font:13px var(--f-mono);color:var(--ink)}
+.toggle{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;cursor:pointer}
+.toggle input{margin-top:3px;accent-color:var(--accent)}
+.toggle small{display:block;color:var(--muted);font-size:12px}
+.quick{display:flex;flex-direction:column;gap:6px}
+.quick button{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;cursor:pointer;font-size:13.5px}
+.quick button:hover{border-color:var(--accent)}
+.quick .z{color:var(--zombie);font-family:var(--f-mono);font-weight:600}
+.quick .o{color:var(--orphan);font-family:var(--f-mono);font-weight:600}
+.empty{color:var(--muted);font-size:14px;margin:0}
+
+/* log */
+.log-panel{padding:0}
+.log-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:8px}
+#log{list-style:none;margin:0;padding:10px 14px;font:12.5px/1.6 var(--f-mono);max-height:220px;overflow:auto}
+#log li{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:10px;white-space:normal}
+#log .ts{color:var(--muted);font-variant-numeric:tabular-nums}
+#log .tg{font-weight:600;min-width:6ch;text-transform:uppercase;font-size:11px;padding-top:1px}
+#log .tg.fork{color:var(--accent)}#log .tg.exit{color:var(--stop)}#log .tg.reap{color:var(--run)}
+#log .tg.adopt{color:var(--orphan)}#log .tg.warn{color:var(--zombie)}#log .tg.info,#log .tg.boot{color:var(--muted)}
+#log li.new{animation:flash 1.2s ease}
+@keyframes flash{0%{background:var(--accent-soft)}100%{background:transparent}}
+
+/* Dialog & modal */
+dialog{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:20px;max-width:480px;width:calc(100vw - 32px);box-shadow:0 12px 36px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(0,0,0,.5);backdrop-filter:blur(2px)}
+dialog h3{margin:0 0 12px;font:700 18px var(--f-display)}
+.shortcut-grid{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:13.5px;margin:12px 0 18px}
+.shortcut-grid kbd{font:600 12px var(--f-mono);background:var(--sunken);border:1px solid var(--line);padding:2px 6px;border-radius:4px;min-width:24px;text-align:center;display:inline-block}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;pointer-events:none;
+  background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:10px;max-width:min(520px,calc(100vw - 32px));font-size:14px;transition:.25s;z-index:9}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+footer{color:var(--muted);font-size:12.5px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>Process Tree Explorer<span class="pid">PID 1</span></h1>
+      <p>Every process has a parent. Watch what happens when that relationship breaks: <b>zombies</b> are children nobody reaped, <b>orphans</b> are children whose parent died first.</p>
+    </div>
+    <div class="hdr-actions">
+      <button class="btn" id="themeBtn" type="button" aria-label="Toggle dark/light theme" title="Toggle theme (D)">🌙 Dark</button>
+      <button class="btn" id="shortcutsBtn" type="button" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">⌨️ Shortcuts</button>
+      <button class="btn" id="resetBtn" type="button" title="Reset scenario (R)">Reset scenario</button>
+      <button class="btn primary" id="tourBtn" type="button" title="Start guided tour (T)">Start guided tour</button>
+    </div>
+  </header>
+
+  <nav class="rail" id="rail" aria-label="Scenarios"></nav>
+
+  <section class="brief" id="brief" aria-live="polite"></section>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="work">
+    <section class="panel">
+      <div class="canvas-head">
+        <div class="canvas-head-left">
+          <div class="seg" role="group" aria-label="View">
+            <button type="button" data-view="graph" aria-pressed="true" title="Graph view (1)">Graph</button>
+            <button type="button" data-view="text" aria-pressed="false" title="pstree view (2)">pstree</button>
+            <button type="button" data-view="table" aria-pressed="false" title="ps -ef view (3)">ps -ef</button>
+          </div>
+          <div class="search-wrap">
+            <input type="search" id="procSearch" placeholder="Filter… (/)" aria-label="Filter processes">
+            <button class="search-clear" id="clearSearch" type="button" aria-label="Clear filter">&times;</button>
+          </div>
+        </div>
+        <button class="btn" id="fitBtn" type="button" aria-pressed="false" title="Toggle fit to width (F)">Fit to width</button>
+      </div>
+      <div class="stage" id="stage">
+        <svg id="graph" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Process tree graph">
+          <g id="edges"></g><g id="nodes"></g>
+        </svg>
+        <div id="textview" class="textview" hidden></div>
+        <div id="tableview" hidden></div>
+      </div>
+    </section>
+    <aside class="panel insp" id="insp" aria-live="polite"></aside>
+  </div>
+
+  <section class="panel log-panel">
+    <div class="log-head">
+      <span class="label">Kernel event log</span>
+      <div style="display:flex;gap:6px">
+        <button class="btn" id="copyLog" type="button" style="padding:4px 10px;min-height:28px;font-size:12px" title="Copy log to clipboard">Copy log</button>
+        <button class="btn" id="clearLog" type="button" style="padding:4px 10px;min-height:28px;font-size:12px">Clear</button>
+      </div>
+    </div>
+    <ol id="log"></ol>
+  </section>
+
+  <footer>
+    <span>Scenarios are modelled on real <span class="mono">ps -ef</span> output from Ubuntu 24.04, Docker and Chromium. Run the Docker package to switch on <b>Live</b> mode, which reads the container's real <span class="mono">/proc</span>.</span>
+    <span class="mono" style="opacity:0.7">Offline-ready · Bundled fonts</span>
+  </footer>
+</div>
+
+<dialog id="shortcutsModal">
+  <h3>Keyboard Shortcuts</h3>
+  <div class="shortcut-grid">
+    <div><kbd>1</kbd></div><div>Graph view</div>
+    <div><kbd>2</kbd></div><div>pstree view</div>
+    <div><kbd>3</kbd></div><div>ps -ef table view</div>
+    <div><kbd>T</kbd></div><div>Start or advance Guided Tour</div>
+    <div><kbd>R</kbd></div><div>Reset current scenario</div>
+    <div><kbd>F</kbd></div><div>Toggle Fit to width</div>
+    <div><kbd>D</kbd></div><div>Toggle Dark / Light theme</div>
+    <div><kbd>/</kbd></div><div>Search / filter processes</div>
+    <div><kbd>Esc</kbd></div><div>Clear selection or search</div>
+    <div><kbd>?</kbd></div><div>Open this shortcuts dialog</div>
+  </div>
+  <div style="text-align:right">
+    <button class="btn primary" id="closeShortcuts" type="button">Close</button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+"use strict";
+const $ = s => document.querySelector(s);
+const NS = "http://www.w3.org/2000/svg";
+const NODEW = 180, NODEH = 46, COLW = 228, ROWH = 58, PAD = 20;
+const STATE = { R: "Running", S: "Sleeping", I: "Idle", D: "Disk sleep", Z: "Zombie", T: "Stopped" };
+const STATE_HELP = {
+  R: "Running on a CPU or waiting in the run queue.",
+  S: "Sleeping until something happens: input, a timer, a network packet or a signal. Most processes spend their whole life here.",
+  D: "Waiting on I/O and cannot be interrupted, not even by SIGKILL.",
+  I: "An idle kernel worker thread with nothing queued.",
+  Z: "Finished. Its memory and files are already released, but its process-table entry (PID and exit status) stays until the parent reads it with wait().",
+  T: "Paused by SIGSTOP or Ctrl+Z. It keeps its memory but gets no CPU until SIGCONT."
+};
+
+/* ---------- scenarios (rows: pid, ppid, name, cmd, user, state, opts) ---------- */
+const SYSTEMD = [1, 0, "systemd", "/sbin/init splash", "root", "S", { sub: true }];
+const SCEN = [
+ { id: "boot", label: "Server boot", title: "A freshly booted Ubuntu server",
+   blurb: "Two roots. systemd (PID 1) starts every user-space service, and kthreadd (PID 2) parents the kernel's own threads. Both show PPID 0, the kernel's idle task.",
+   tryit: "Select htop and follow its lineage back to PID 1. Then fork a child from bash and kill it.",
+   rows: [SYSTEMD,
+    [2, 0, "kthreadd", "[kthreadd]", "root", "S", { kernel: true }],
+    [3, 2, "rcu_gp", "[rcu_gp]", "root", "I", { kernel: true }],
+    [14, 2, "ksoftirqd/0", "[ksoftirqd/0]", "root", "S", { kernel: true }],
+    [87, 2, "kworker/0:2", "[kworker/0:2-events]", "root", "I", { kernel: true }],
+    [412, 1, "systemd-journald", "/usr/lib/systemd/systemd-journald", "root", "S"],
+    [455, 1, "systemd-udevd", "/usr/lib/systemd/systemd-udevd", "root", "S"],
+    [801, 1, "systemd-logind", "/usr/lib/systemd/systemd-logind", "root", "S"],
+    [812, 1, "cron", "/usr/sbin/cron -f -P", "root", "S"],
+    [830, 1, "sshd", "sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups", "root", "S"],
+    [2201, 830, "sshd", "sshd: arya [priv]", "root", "S"],
+    [2260, 2201, "sshd", "sshd: arya@pts/0", "arya", "S"],
+    [2261, 2260, "bash", "-bash", "arya", "S"],
+    [2399, 2261, "htop", "htop", "arya", "R"],
+    [1980, 1, "systemd", "/usr/lib/systemd/systemd --user", "arya", "S", { sub: true }],
+    [1984, 1980, "(sd-pam)", "(sd-pam)", "arya", "S"]] },
+ { id: "web", label: "Web stack", title: "nginx, Gunicorn and PostgreSQL",
+   blurb: "Servers use a master and worker pattern: one parent owns the listening socket and forks a pool of workers. When a worker dies the master gets SIGCHLD, reaps it and forks a replacement.",
+   tryit: "kill -9 an nginx worker. The master reaps it and respawns a worker with a new PID.",
+   rows: [SYSTEMD,
+    [845, 1, "nginx", "nginx: master process /usr/sbin/nginx -g daemon on; master_process on;", "root", "S", { respawn: true }],
+    [846, 845, "nginx", "nginx: worker process", "www-data", "S"],
+    [847, 845, "nginx", "nginx: worker process", "www-data", "R"],
+    [848, 845, "nginx", "nginx: worker process", "www-data", "S"],
+    [903, 1, "postgres", "/usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/16/main", "postgres", "S"],
+    [905, 903, "postgres", "postgres: 16/main: checkpointer", "postgres", "S"],
+    [906, 903, "postgres", "postgres: 16/main: background writer", "postgres", "S"],
+    [908, 903, "postgres", "postgres: 16/main: walwriter", "postgres", "S"],
+    [909, 903, "postgres", "postgres: 16/main: autovacuum launcher", "postgres", "S"],
+    [3120, 903, "postgres", "postgres: 16/main: shop shop 10.0.0.12(51544) idle", "postgres", "S"],
+    [3121, 903, "postgres", "postgres: 16/main: shop shop 10.0.0.12(51548) SELECT", "postgres", "R"],
+    [1203, 1, "gunicorn", "gunicorn: master [shop.wsgi:application]", "www-data", "S", { respawn: true }],
+    [1210, 1203, "gunicorn", "gunicorn: worker [shop.wsgi:application]", "www-data", "S"],
+    [1211, 1203, "gunicorn", "gunicorn: worker [shop.wsgi:application]", "www-data", "R"]] },
+ { id: "zombie", label: "Zombies", title: "A leaky Python server",
+   blurb: "leaky_server.py forks a handler for every request but never calls wait(). Each finished handler stays in the process table as <defunct>, holding on to a PID until somebody reaps it.",
+   tryit: "kill -9 a zombie (nothing happens). Then call wait() on python3, or kill python3 and watch systemd adopt and reap the zombies.",
+   rows: [SYSTEMD,
+    [830, 1, "sshd", "sshd: /usr/sbin/sshd -D [listener]", "root", "S"],
+    [2201, 830, "sshd", "sshd: arya [priv]", "root", "S"],
+    [2260, 2201, "sshd", "sshd: arya@pts/0", "arya", "S"],
+    [2261, 2260, "bash", "-bash", "arya", "S"],
+    [3301, 2261, "python3", "python3 leaky_server.py --port 8000", "arya", "S", { reaps: false }],
+    [3302, 3301, "python3", "python3 leaky_server.py --port 8000", "arya", "Z"],
+    [3305, 3301, "python3", "python3 leaky_server.py --port 8000", "arya", "Z"],
+    [3309, 3301, "python3", "python3 leaky_server.py --port 8000", "arya", "Z"],
+    [3311, 3301, "python3", "python3 leaky_server.py --port 8000", "arya", "R"],
+    [812, 1, "cron", "/usr/sbin/cron -f -P", "root", "S"],
+    [3400, 812, "cron", "/usr/sbin/CRON -f -P", "root", "S"],
+    [3401, 3400, "sh", "/bin/sh -c /opt/report.sh", "arya", "S"]] },
+ { id: "orphan", label: "Orphans", title: "A backup script about to crash",
+   blurb: "If a parent dies first, its children are not killed. The kernel reparents them to the nearest ancestor that registered as a child subreaper, or to PID 1. Two processes here have already been adopted.",
+   tryit: "kill -9 backup.sh and watch rsync and gzip move under systemd --user.",
+   rows: [SYSTEMD,
+    [1980, 1, "systemd", "/usr/lib/systemd/systemd --user", "arya", "S", { sub: true }],
+    [2610, 1980, "gnome-terminal-", "/usr/libexec/gnome-terminal-server", "arya", "S"],
+    [2615, 2610, "bash", "bash", "arya", "S"],
+    [2701, 2615, "backup.sh", "bash ./backup.sh --nightly", "arya", "S"],
+    [2702, 2701, "rsync", "rsync -a /home/arya /mnt/backup", "arya", "R"],
+    [2703, 2701, "gzip", "gzip -9 db.sql", "arya", "R"],
+    [2550, 1980, "sleep", "sleep 3600", "arya", "S", { adopted: true, orig: 2540 }],
+    [2588, 1, "python3", "python3 -m http.server 8080", "arya", "S", { adopted: true, orig: 2580 }]] },
+ { id: "docker", label: "Containers", title: "Two containers on one host",
+   blurb: "Each container runs under a containerd shim (a child subreaper) in its own PID namespace, where its first process is PID 1. Container A runs tini as PID 1, which reaps everything. Container B runs python as PID 1, which never calls wait().",
+   tryit: "kill -9 node in container A: its workers are adopted by tini, not by the host's systemd. Then look at the zombie in container B.",
+   rows: [SYSTEMD,
+    [640, 1, "containerd", "/usr/bin/containerd", "root", "S"],
+    [702, 1, "dockerd", "/usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock", "root", "S"],
+    [4410, 1, "containerd-shim", "/usr/bin/containerd-shim-runc-v2 -namespace moby -id 7f3c9a1e -address /run/containerd/containerd.sock", "root", "S", { sub: true }],
+    [4431, 4410, "docker-init", "/sbin/docker-init -- node server.js", "root", "S", { nsInit: true, ns: 1 }],
+    [4452, 4431, "node", "node server.js", "node", "S", { ns: 7 }],
+    [4470, 4452, "node", "node worker.js --id=1", "node", "R", { ns: 18 }],
+    [4471, 4452, "node", "node worker.js --id=2", "node", "S", { ns: 19 }],
+    [4610, 1, "containerd-shim", "/usr/bin/containerd-shim-runc-v2 -namespace moby -id b20d44f0 -address /run/containerd/containerd.sock", "root", "S", { sub: true }],
+    [4630, 4610, "python", "python app.py", "root", "S", { nsInit: true, ns: 1, reaps: false }],
+    [4655, 4630, "curl", "curl -s http://api.internal/health", "root", "Z", { ns: 12 }],
+    [4661, 4630, "gunicorn", "gunicorn app:api -w 1", "root", "S", { ns: 15 }]] },
+ { id: "browser", label: "Browser", title: "A Chromium browser",
+   blurb: "A browser is a family of processes: the browser process, a zygote that pre-forks renderers, a GPU process and utility processes. A crashed tab is a single renderer exiting; the browser reaps it and carries on.",
+   tryit: "kill -9 a renderer. That is what a crashed tab looks like from the process table.",
+   rows: [SYSTEMD,
+    [1980, 1, "systemd", "/usr/lib/systemd/systemd --user", "arya", "S", { sub: true }],
+    [5100, 1980, "chromium", "/usr/lib/chromium/chromium --enable-features=UseOzonePlatform", "arya", "S"],
+    [5108, 5100, "chrome_crashpad", "/usr/lib/chromium/chrome_crashpad_handler --monitor-self", "arya", "S"],
+    [5112, 5100, "chromium", "chromium --type=zygote --no-zygote-sandbox", "arya", "S"],
+    [5113, 5100, "chromium", "chromium --type=zygote", "arya", "S"],
+    [5170, 5113, "chromium", "chromium --type=renderer --renderer-client-id=7", "arya", "R"],
+    [5171, 5113, "chromium", "chromium --type=renderer --renderer-client-id=8", "arya", "S"],
+    [5190, 5113, "chromium", "chromium --type=renderer --renderer-client-id=12", "arya", "S"],
+    [5140, 5112, "chromium", "chromium --type=gpu-process", "arya", "S"],
+    [5143, 5100, "chromium", "chromium --type=utility --utility-sub-type=network.mojom.NetworkService", "arya", "S"],
+    [5146, 5100, "chromium", "chromium --type=utility --utility-sub-type=storage.mojom.StorageService", "arya", "S"]] }
+];
+const LIVE = { id: "live", label: "Live", title: "Live: this container's /proc",
+  blurb: "Read from /proc every two seconds. Spawn the demo programs to create real zombies and orphans, then signal them from the inspector.",
+  tryit: "Spawn zombies, select leaky-parent and send SIGUSR1 (it calls wait()). Or spawn an orphan and watch PID 1 adopt it." };
+
+/* ---------- state ---------- */
+let procs = new Map(), sel = null, scen = "boot", view = "graph", gen = 0, sync = false;
+let lastSig = "", nextPid = 0, tourIdx = -1, liveOK = false, liveHasProc = true, liveTimer = null, livePrev = null;
+let searchQuery = "";
+const t0 = performance.now();
+const gmap = new Map();
+
+/* ---------- theme handling ---------- */
+function initTheme() {
+  const saved = localStorage.getItem("pte-theme");
+  const darkPref = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const theme = saved || (darkPref ? "dark" : "light");
+  applyTheme(theme);
+}
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("pte-theme", theme);
+  const btn = $("#themeBtn");
+  if (btn) {
+    btn.innerHTML = theme === "dark" ? "☀️ Light" : "🌙 Dark";
+    btn.setAttribute("aria-label", `Switch to ${theme === "dark" ? "light" : "dark"} theme`);
+  }
+}
+function toggleTheme() {
+  const curr = document.documentElement.getAttribute("data-theme") || 
+               (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  applyTheme(curr === "dark" ? "light" : "dark");
+}
+
+function mk(r) {
+  const [pid, ppid, name, cmd, user, state, o = {}] = r;
+  return { pid, ppid, name, cmd, user, state, reaps: o.reaps !== false, sub: !!o.sub, kernel: !!o.kernel,
+    adopted: !!o.adopted, orig: o.orig ?? null, respawn: !!o.respawn, nsInit: !!o.nsInit, ns: o.ns ?? null };
+}
+function loadScenario(id, opts = {}) {
+  gen++; scen = id; sel = null;
+  stopLive();
+  if (!opts.keepLog) clearLog();
+  if (id === "live") { procs = new Map(); log("boot", "connecting to /proc …"); startLive(); render(); return; }
+  const s = SCEN.find(x => x.id === id);
+  procs = new Map(s.rows.map(r => { const p = mk(r); return [p.pid, p]; }));
+  $("#stage").scrollTo(0, 0);
+  nextPid = Math.max(...procs.keys());
+  log("boot", `scenario: ${s.title} (${procs.size} processes)`);
+  render();
+}
+
+/* ---------- process model ---------- */
+const kids = pid => [...procs.values()].filter(p => p.ppid === pid).sort((a, b) => a.pid - b.pid);
+function lineage(pid) { const out = []; let p = procs.get(pid); const seen = new Set();
+  while (p && !seen.has(p.pid)) { seen.add(p.pid); out.unshift(p); p = procs.get(p.ppid); } return out; }
+const tag = p => `${p.name}(${p.pid})`;
+function newPid() { nextPid = Math.max(nextPid, ...procs.keys()) + 1 + Math.floor(Math.random() * 4); return nextPid; }
+function nsOf(pid) { return lineage(pid).find(a => a.nsInit && a.pid !== pid) || null; }
+
+function reaperFor(pid) {
+  // Linux: nearest living ancestor that is a child subreaper or the init of the PID namespace; else PID 1
+  let a = procs.get(procs.get(pid).ppid);
+  while (a) { if ((a.sub || a.nsInit) && a.state !== "Z") return a; a = procs.get(a.ppid); }
+  return procs.get(1);
+}
+function canReap(par) { return par && par.reaps && par.state !== "Z" && par.state !== "T"; }
+
+function reapSoon(pid) {
+  const g = gen;
+  const run = () => {
+    if (g !== gen) return;
+    const c = procs.get(pid); if (!c || c.state !== "Z") return;
+    const par = procs.get(c.ppid); if (!canReap(par)) return;
+    procs.delete(pid);
+    log("reap", `${tag(par)} wait() → collected ${tag(c)}, status ${c.status ?? "0"}`);
+    if (sel === pid) sel = par.pid;
+    if (par.respawn && !c.adopted) {
+      const np = mk([newPid(), par.pid, c.name, c.cmd, c.user, "S"]);
+      procs.set(np.pid, np);
+      log("fork", `${tag(par)} respawned a worker → ${np.pid}`);
+    }
+    if (!sync) render();
+  };
+  sync ? run() : setTimeout(run, 950);
+}
+
+function doFork(pid, cmd) {
+  const par = procs.get(pid); cmd = (cmd || "").trim() || "sleep 30";
+  if (!par) return;
+  if (par.kernel) return toast("Kernel threads are created by the kernel, not with fork() from user space.");
+  if (par.state === "Z") return toast(`${tag(par)} is a zombie. A dead process cannot fork.`);
+  if (par.state === "T") return toast(`${tag(par)} is stopped. Send SIGCONT first.`);
+  const name = cmd.split(/\s+/)[0].split("/").pop().slice(0, 15) || "child";
+  const ns = nsOf(pid) || (par.nsInit ? par : null);
+  const c = mk([newPid(), pid, name, cmd, par.user, "S", ns ? { ns: 20 + Math.floor(Math.random() * 60) } : {}]);
+  procs.set(c.pid, c);
+  log("fork", `${tag(par)} fork() → ${c.pid}; child execve("${cmd}")`);
+  sel = c.pid; if (!sync) render();
+  return c.pid;
+}
+
+function doKill(pid, sig = "SIGKILL") {
+  const p = procs.get(pid); if (!p) return;
+  if (pid === 1) { log("warn", "kill -9 1: refused. Killing init would panic the kernel (\"Attempted to kill init!\")");
+    return toast("PID 1 ignores SIGKILL from user space. If init ever exits, the kernel panics."); }
+  if (p.kernel) return toast("Kernel threads ignore signals sent from user space.");
+  if (p.state === "Z") { log("warn", `kill -9 ${pid}: no effect, ${tag(p)} is already a zombie`);
+    return toast(`${tag(p)} is already dead, so there is nothing to kill. Its parent must call wait(), or the parent must exit.`); }
+
+  if (p.nsInit) { // the namespace's init dies: kernel SIGKILLs every process in that namespace
+    const doomed = [...procs.values()].filter(x => x.pid !== pid && lineage(x.pid).some(a => a.pid === pid));
+    doomed.forEach(x => procs.delete(x.pid));
+    if (doomed.length) log("exit", `PID namespace init ${tag(p)} exited → kernel SIGKILLed ${doomed.length} process(es) in the container`);
+  } else {
+    for (const c of kids(pid)) {
+      const r = reaperFor(pid);
+      c.orig = c.orig ?? pid; c.ppid = r.pid; c.adopted = true;
+      log("adopt", `${tag(c)} orphaned → reparented to ${tag(r)}${r.pid === 1 ? "" : r.nsInit ? " [container init]" : " [subreaper]"}`);
+      if (c.state === "Z") reapSoon(c.pid);
+    }
+  }
+  p.state = "Z"; p.status = sig === "SIGKILL" ? "killed by SIGKILL" : sig;
+  const par = procs.get(p.ppid);
+  log("exit", `${tag(p)} ${sig === "exit" ? "called exit(0)" : "terminated by " + sig}${par ? "; SIGCHLD → " + tag(par) : ""}`);
+  if (!par) { procs.delete(pid); if (sel === pid) sel = null; }
+  else if (canReap(par)) reapSoon(pid);
+  else log("warn", `${tag(par)} ${par.state === "T" ? "is stopped and can't" : "never calls"} wait() → ${tag(p)} is now <defunct>`);
+  if (!sync) render();
+}
+
+function doWait(pid) {
+  const p = procs.get(pid); const z = kids(pid).filter(c => c.state === "Z");
+  if (!z.length) { log("info", `${tag(p)} wait() → no exited children (would block, or ECHILD)`);
+    return toast("No zombie children to collect. wait() would block until a child exits."); }
+  z.forEach(c => { procs.delete(c.pid); log("reap", `${tag(p)} wait() → collected ${tag(c)}`); });
+  if (!sync) render();
+}
+
+function doStopCont(pid) {
+  const p = procs.get(pid);
+  if (pid === 1 || p.kernel) return toast("That process can't be stopped from user space.");
+  if (p.state === "Z") return toast("A zombie can't be stopped. It has already exited.");
+  if (p.state === "T") { p.state = p.wasR ? "R" : "S"; log("info", `kill -CONT ${pid} → ${tag(p)} resumed`);
+    if (p.reaps) kids(pid).filter(c => c.state === "Z").forEach(c => reapSoon(c.pid)); }
+  else { p.wasR = p.state === "R"; p.state = "T"; log("info", `kill -STOP ${pid} → ${tag(p)} stopped`); }
+  render();
+}
+
+/* ---------- filtering ---------- */
+function isMatched(p) {
+  if (!searchQuery) return true;
+  const q = searchQuery.toLowerCase();
+  return String(p.pid).includes(q) || 
+         String(p.ppid).includes(q) || 
+         p.name.toLowerCase().includes(q) || 
+         p.cmd.toLowerCase().includes(q) || 
+         p.user.toLowerCase().includes(q);
+}
+
+/* ---------- layout ---------- */
+function layout() {
+  const pos = new Map(); let row = 0, maxD = 0;
+  const roots = [...procs.values()].filter(p => !procs.has(p.ppid)).sort((a, b) => a.pid - b.pid);
+  const place = (p, d, seen) => {
+    if (seen.has(p.pid)) return; seen.add(p.pid);
+    maxD = Math.max(maxD, d);
+    const ch = kids(p.pid);
+    if (!ch.length) { pos.set(p.pid, { x: d, y: row++ }); return; }
+    ch.forEach(c => place(c, d + 1, seen));
+    const ys = ch.map(c => pos.get(c.pid)).filter(Boolean).map(q => q.y);
+    pos.set(p.pid, { x: d, y: (ys[0] + ys[ys.length - 1]) / 2 });
+  };
+  const seen = new Set();
+  roots.forEach((r, i) => { if (i) row += 0.4; place(r, 0, seen); });
+  return { pos, maxD, rows: Math.max(row, 1) };
+}
+const X = d => PAD + d * COLW, Y = r => PAD + r * ROWH;
+const clip = (s, n) => s.length > n ? s.slice(0, n - 1) + "…" : s;
+
+/* ---------- rendering ---------- */
+function render() {
+  renderRail(); renderBrief(); renderStats();
+  if (view === "graph") renderGraph();
+  if (view === "text") renderText();
+  if (view === "table") renderTable();
+  renderInspector();
+}
+function renderRail() {
+  const list = liveOK ? [...SCEN, LIVE] : SCEN;
+  $("#rail").innerHTML = list.map(s => {
+    const n = s.id === scen ? procs.size : (s.rows ? s.rows.length : "");
+    return `<button type="button" class="chip${s.id === "live" ? " live" : ""}" data-scen="${s.id}" aria-pressed="${s.id === scen}">${s.label}<span class="n">${n}</span></button>`;
+  }).join("");
+}
+function renderBrief() {
+  const b = $("#brief");
+  if (tourIdx >= 0) {
+    const st = TOUR[tourIdx];
+    b.className = "brief tour";
+    b.innerHTML = `<div><span class="eyebrow">Guided tour · step ${tourIdx + 1} of ${TOUR.length}</span><h2>${st.title}</h2><p class="explain">${st.text}</p></div>
+      <div class="tour-nav"><button class="btn" type="button" data-tour="prev" ${tourIdx === 0 ? "disabled" : ""}>Back</button>
+      <button class="btn primary" type="button" data-tour="next">${tourIdx === TOUR.length - 1 ? "Finish" : "Next"}</button>
+      <button class="btn" type="button" data-tour="exit">Exit tour</button></div>`;
+    return;
+  }
+  const s = scen === "live" ? LIVE : SCEN.find(x => x.id === scen);
+  b.className = "brief";
+  let extraNotice = "";
+  if (scen === "live" && !liveHasProc) {
+    extraNotice = `<p class="explain o" style="margin-top:10px"><b>Notice:</b> This server is running without native Linux <span class="mono">/proc</span>. To test real live Linux processes and triggers, build and run the Docker image: <span class="mono">docker run --rm -p 8080:8080 process-tree-explorer</span></p>`;
+  }
+  b.innerHTML = `<div><h2>${s.title}</h2><p>${esc(s.blurb)}</p><p class="try">${esc(s.tryit)}</p>${extraNotice}
+    ${scen === "live" ? `<div class="live-btns"><button class="btn" type="button" data-spawn="zombie">Spawn zombies</button>
+      <button class="btn" type="button" data-spawn="orphan">Spawn orphan</button><button class="btn" type="button" data-spawn="tree">Spawn a tree</button>
+      <button class="btn danger" type="button" data-spawn="cleanup">Kill all demos</button></div>` : ""}</div>`;
+}
+function renderStats() {
+  const all = [...procs.values()];
+  const c = k => all.filter(p => p.state === k).length;
+  const z = c("Z"), o = all.filter(p => p.adopted).length;
+  $("#stats").innerHTML = `
+    <span class="stat"><b>${all.length}</b>processes</span>
+    <span class="stat"><b>${c("R")}</b>running</span>
+    <span class="stat"><b>${c("S") + c("I") + c("D")}</b>sleeping</span>
+    <span class="stat"><b>${c("T")}</b>stopped</span>
+    <span class="stat${z ? " hot-z" : ""}"><b>${z}</b>zombie</span>
+    <span class="stat${o ? " hot-o" : ""}"><b>${o}</b>adopted orphans</span>
+    <span class="legend" aria-label="Legend">
+      <span class="lg"><i style="background:var(--run)">R</i>running</span>
+      <span class="lg"><i style="background:var(--sleep)">S</i>sleeping</span>
+      <span class="lg"><i style="background:var(--stop)">T</i>stopped</span>
+      <span class="lg"><i style="background:var(--zombie)">Z</i>zombie</span>
+      <span class="lg"><span class="dash"></span>adopted</span></span>`;
+}
+const TMPL = `<rect class="card" width="${NODEW}" height="${NODEH}" rx="8"/><rect class="badge" x="6" y="7" width="22" height="32" rx="4"/>
+  <text class="letter" x="17" y="28"></text><text class="nm" x="36" y="20"></text><text class="mt" x="36" y="36"></text>
+  <circle class="adot" cx="${NODEW - 11}" cy="11" r="4.5"/><title></title>`;
+
+function renderGraph() {
+  const svg = $("#graph"), ge = $("#edges"), gn = $("#nodes");
+  const { pos, maxD, rows } = layout();
+  const W = PAD * 2 + maxD * COLW + NODEW, H = PAD * 2 + (rows - 1) * ROWH + NODEH;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("width", W); svg.setAttribute("height", H);
+  const stage = $("#stage"), cap = Math.max(260, Math.min(window.innerHeight * 0.62, 620));
+  stage.style.height = stage.classList.contains("fit") ? "auto" : Math.min(H + 6, cap) + "px";
+  const lin = new Set(sel ? lineage(sel).map(p => p.pid) : []);
+  const sig = [...procs.values()].map(p => p.pid + ":" + p.ppid).join(",");
+  let e = "";
+  for (const p of procs.values()) {
+    const a = pos.get(p.ppid), b = pos.get(p.pid); if (!a || !b) continue;
+    const x1 = X(a.x) + NODEW, y1 = Y(a.y) + NODEH / 2, x2 = X(b.x), y2 = Y(b.y) + NODEH / 2, mx = (x1 + x2) / 2;
+    const cls = "edge" + (p.adopted ? " adopted" : "") + (lin.has(p.pid) && lin.has(p.ppid) ? " lin" : "");
+    e += `<path class="${cls}" d="M${x1} ${y1}C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}"/>`;
+    if (p.adopted) e += `<text class="edge-tag" x="${x2 + 4}" y="${Y(b.y) - 3}">ADOPTED</text>`;
+  }
+  ge.innerHTML = e;
+  if (sig !== lastSig) { ge.classList.remove("redraw"); ge.getBoundingClientRect(); ge.classList.add("redraw"); lastSig = sig; }
+
+  const hasFilter = searchQuery.length > 0;
+  const seen = new Set();
+  for (const p of procs.values()) {
+    const q = pos.get(p.pid); if (!q) continue;
+    seen.add(p.pid);
+    let g = gmap.get(p.pid); const fresh = !g;
+    if (fresh) {
+      g = document.createElementNS(NS, "g"); g.innerHTML = TMPL;
+      g.setAttribute("tabindex", "0"); g.setAttribute("role", "button"); g.dataset.pid = p.pid;
+      gn.appendChild(g); gmap.set(p.pid, g);
+    }
+    const matched = isMatched(p);
+    const filterCls = hasFilter ? (matched ? " matched" : " dimmed") : "";
+    g.setAttribute("class", `st-${p.state}${p.pid === sel ? " sel" : ""}${lin.has(p.pid) ? " lin" : ""}${p.adopted ? " adopted" : ""}${p.kernel ? " kernel" : ""}${filterCls}`);
+    g.querySelector(".letter").textContent = p.state;
+    g.querySelector(".nm").textContent = clip(p.state === "Z" ? `${p.name} <defunct>` : p.name, 18);
+    g.querySelector(".mt").textContent = `PID ${p.pid} · ${clip(p.user, 9)}${p.ns != null ? " · ns " + p.ns : ""}`;
+    g.querySelector("title").textContent = `${p.cmd}\nPID ${p.pid}  PPID ${p.ppid}  ${STATE[p.state] || p.state}`;
+    g.setAttribute("aria-label", `${p.name}, PID ${p.pid}, ${STATE[p.state] || p.state}${p.adopted ? ", adopted" : ""}`);
+    const to = `translate(${X(q.x)}px, ${Y(q.y)}px)`;
+    if (fresh) {
+      const from = pos.get(p.ppid);
+      g.style.transform = from ? `translate(${X(from.x)}px, ${Y(from.y)}px)` : to; g.style.opacity = "0";
+      requestAnimationFrame(() => requestAnimationFrame(() => { g.style.transform = to; g.style.opacity = ""; }));
+    } else g.style.transform = to;
+  }
+  for (const [pid, g] of gmap) if (!seen.has(pid)) { gmap.delete(pid); g.classList.add("leaving"); setTimeout(() => g.remove(), 420); }
+}
+
+function renderText() {
+  const lines = [];
+  const roots = [...procs.values()].filter(p => !procs.has(p.ppid)).sort((a, b) => a.pid - b.pid);
+  const hasFilter = searchQuery.length > 0;
+  const walk = (p, prefix, last, root) => {
+    const cls = p.state === "Z" ? "z" : p.adopted ? "o" : p.kernel ? "k" : p.state === "R" ? "r" : "";
+    const label = `${esc(p.name)}(${p.pid})${p.state === "Z" ? " &lt;defunct&gt;" : ""}${p.adopted ? "  ← adopted" : ""}${p.state === "T" ? "  [stopped]" : ""}`;
+    const matched = isMatched(p);
+    const filterCls = hasFilter ? (matched ? " matched" : " dimmed") : "";
+    lines.push(`<div data-pid="${p.pid}" class="${p.pid === sel ? "sel" : ""}${filterCls}"><span class="tree">${root ? "" : prefix + (last ? "└─ " : "├─ ")}</span><span class="${cls}">${label}</span></div>`);
+    const ch = kids(p.pid);
+    ch.forEach((c, i) => walk(c, root ? "" : prefix + (last ? "   " : "│  "), i === ch.length - 1, false));
+  };
+  roots.forEach(r => walk(r, "", true, true));
+  $("#textview").innerHTML = `<div class="k" style="cursor:default">$ pstree -p</div>` + lines.join("");
+}
+
+function renderTable() {
+  const hasFilter = searchQuery.length > 0;
+  const rows = [...procs.values()].sort((a, b) => a.pid - b.pid).map(p => {
+    const matched = isMatched(p);
+    const filterCls = hasFilter ? (matched ? " matched" : " dimmed") : "";
+    return `
+    <tr data-pid="${p.pid}" class="${p.state === "Z" ? "z" : ""}${p.pid === sel ? " sel" : ""}${filterCls}">
+      <td>${esc(p.user)}</td><td class="num">${p.pid}</td><td class="num">${p.ppid}</td>
+      <td>${p.state}${p.adopted ? '<span class="tag">ADOPTED</span>' : ""}</td>
+      <td>${p.state === "Z" ? "[" + esc(p.name) + "] &lt;defunct&gt;" : esc(p.cmd)}</td></tr>`;
+  }).join("");
+  $("#tableview").innerHTML = `<table class="ps"><thead><tr><th>UID</th><th style="text-align:right">PID</th><th style="text-align:right">PPID</th><th>STAT</th><th>CMD</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function renderInspector() {
+  const el = $("#insp");
+  const p = sel != null ? procs.get(sel) : null;
+  if (!p) {
+    const z = [...procs.values()].filter(x => x.state === "Z"), o = [...procs.values()].filter(x => x.adopted);
+    el.innerHTML = `<span class="label">Inspector</span><h3>Select a process</h3>
+      <p class="empty">Click any card, pstree line or ps row to see its state, its parent chain and what you can do to it.</p>
+      ${z.length || o.length ? `<div class="quick"><span class="label">Worth a look</span>
+        ${z.map(x => `<button type="button" data-pick="${x.pid}"><span class="z">Z</span> ${esc(x.name)} (${x.pid}) is a zombie</button>`).join("")}
+        ${o.map(x => `<button type="button" data-pick="${x.pid}"><span class="o">⇠</span> ${esc(x.name)} (${x.pid}) was adopted</button>`).join("")}</div>` : ""}`;
+    return;
+  }
+  const par = procs.get(p.ppid), ch = kids(p.pid), zc = ch.filter(c => c.state === "Z").length;
+  const ns = p.nsInit ? p : nsOf(p.pid);
+  let explain = `<p class="explain">${STATE_HELP[p.state] || ""}</p>`;
+  if (p.state === "Z") explain = `<p class="explain z"><b>Zombie.</b> ${STATE_HELP.Z} ${par ? `Fix it by having <button class="link" type="button" data-pick="${par.pid}">${esc(tag(par))}</button> call wait(), or by killing that parent so ${esc(tag(reaperForParent(par)))} adopts and reaps it.` : ""}</p>`;
+  if (p.adopted) explain += `<p class="explain o"><b>Adopted orphan.</b> Its original parent${p.orig ? ` (PID ${p.orig})` : ""} exited first, so the kernel reparented it to ${par ? esc(tag(par)) : "PID " + p.ppid}${par && par.sub && par.pid !== 1 ? ", the nearest child subreaper" : par && par.nsInit ? ", the init of its container" : ""}. It keeps running normally.</p>`;
+  if (p.pid === 1) explain += `<p class="explain">PID 1 is special: the kernel starts it, it adopts every orphan that has no closer subreaper, and it must keep reaping them.</p>`;
+  if (p.nsInit) explain += `<p class="explain">This is PID 1 inside its container. ${p.reaps ? "It reaps every orphan in the container." : "It never calls wait(), so orphans that exit inside this container become zombies. Running the container with docker run --init fixes this."}</p>`;
+  if (p.pid === 2 || p.ppid === 2) explain += `<p class="explain">Kernel threads have no user-space program behind them, which is why ps shows their names in [brackets].</p>`;
+
+  const live = scen === "live";
+  const crumbs = lineage(p.pid).map(a => `<button type="button" data-pick="${a.pid}" title="${esc(a.cmd)}">${esc(a.name)} ${a.pid}</button>`).join("<span>›</span>");
+  let actions = "";
+  if (!live) {
+    const dead = p.state === "Z";
+    actions = `<div class="actions"><span class="label">System calls &amp; signals</span>
+      <div class="row"><input type="text" id="forkCmd" value="sleep 30" aria-label="Command for the child process" ${dead ? "disabled" : ""}><button class="btn" type="button" data-act="fork" ${dead ? "disabled" : ""}>fork()</button></div>
+      <div class="row">
+        <button class="btn danger" type="button" data-act="kill">kill -9</button>
+        <button class="btn" type="button" data-act="exit" ${dead ? "disabled" : ""}>exit(0)</button>
+        <button class="btn" type="button" data-act="stop" ${dead ? "disabled" : ""}>${p.state === "T" ? "kill -CONT" : "kill -STOP"}</button>
+        <button class="btn" type="button" data-act="wait" ${dead ? "disabled" : ""}>wait()${zc ? ` · ${zc}` : ""}</button>
+      </div>
+      <label class="toggle"><input type="checkbox" id="reapsT" ${p.reaps ? "checked" : ""} ${dead || p.pid === 1 ? "disabled" : ""}>
+        <span>Reaps its children<small>Calls wait() when it gets SIGCHLD. Turn off to make a leaky parent.</small></span></label>
+      <label class="toggle"><input type="checkbox" id="subT" ${p.sub ? "checked" : ""} ${dead || p.pid === 1 ? "disabled" : ""}>
+        <span>Child subreaper<small>prctl(PR_SET_CHILD_SUBREAPER). Orphaned descendants are reparented here instead of PID 1.</small></span></label></div>`;
+  } else if (DEMO.has(p.name)) {
+    actions = `<div class="actions"><span class="label">Real signals (demo processes only)</span><div class="row">
+      <button class="btn danger" type="button" data-sig="KILL">kill -9</button>
+      ${p.name === "leaky-parent" ? `<button class="btn" type="button" data-sig="USR1">SIGUSR1 → wait()</button>` : ""}
+      <button class="btn" type="button" data-sig="${p.state === "T" ? "CONT" : "STOP"}">${p.state === "T" ? "kill -CONT" : "kill -STOP"}</button></div></div>`;
+  } else actions = `<p class="empty">Live mode is read-only for processes the demos didn't start.</p>`;
+
+  el.innerHTML = `<div class="pills"><span class="pill st-${p.state}">${p.state} · ${STATE[p.state] || p.state}</span>${p.adopted ? '<span class="pill adopt">adopted</span>' : ""}${p.sub ? '<span class="pill">subreaper</span>' : ""}</div>
+    <h3>${esc(p.state === "Z" ? p.name + " <defunct>" : p.name)}</h3>
+    <code class="cmd">${esc(p.cmd)}</code>
+    <dl class="facts"><dt>PID</dt><dd>${p.pid}${ns && p.ns != null ? ` <span style="color:var(--muted)">(${p.ns} in container)</span>` : ""}</dd>
+      <dt>PPID</dt><dd>${par ? `<button class="link" type="button" data-pick="${par.pid}">${p.ppid}</button> ${esc(par.name)}` : `${p.ppid} <span style="color:var(--muted)">kernel</span>`}</dd>
+      <dt>User</dt><dd>${esc(p.user)}</dd><dt>Children</dt><dd>${ch.length}${zc ? ` (${zc} zombie)` : ""}</dd></dl>
+    ${explain}
+    <div><span class="label">Lineage</span><div class="crumbs" style="margin-top:6px">${crumbs}</div></div>
+    ${actions}`;
+}
+function reaperForParent(par) { let a = procs.get(par.ppid); while (a) { if ((a.sub || a.nsInit) && a.state !== "Z") return a; a = procs.get(a.ppid); } return procs.get(1) || { name: "init", pid: 1 }; }
+
+/* ---------- log & toast ---------- */
+function log(tagName, msg) {
+  const ts = ((performance.now() - t0) / 1000).toFixed(3).padStart(9, " ");
+  const li = document.createElement("li"); li.className = "new";
+  li.innerHTML = `<span class="ts">[${ts}]</span><span class="tg ${tagName}">${tagName}</span><span>${esc(msg)}</span>`;
+  const ol = $("#log"); ol.appendChild(li); while (ol.children.length > 200) ol.firstChild.remove();
+  ol.scrollTop = ol.scrollHeight;
+}
+function clearLog() { $("#log").innerHTML = ""; }
+function copyLogToClipboard() {
+  const lines = [...document.querySelectorAll("#log li")].map(li => {
+    const ts = li.querySelector(".ts")?.textContent || "";
+    const tg = li.querySelector(".tg")?.textContent || "";
+    const msg = li.lastElementChild?.textContent || "";
+    return `${ts} ${tg.padEnd(7)} ${msg}`;
+  });
+  if (!lines.length) return toast("Event log is empty.");
+  navigator.clipboard.writeText(lines.join("\n")).then(() => {
+    toast(`Copied ${lines.length} kernel log events to clipboard!`);
+  }).catch(() => toast("Failed to copy log."));
+}
+
+let toastT; function toast(m) { const t = $("#toast"); t.textContent = m; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 4200); }
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+/* ---------- guided tour ---------- */
+const run = (fn) => { sync = true; try { fn(); } finally { sync = false; } };
+const TOUR = [
+ { title: "Every process has a parent", text: "PID 1 is systemd, the first program the kernel starts. Every user-space process on this machine descends from it. On each card the coloured badge is the state letter from ps (S is sleeping), followed by the name and PID.",
+   setup() { loadScenario("boot"); sel = 1; } },
+ { title: "Follow the lineage", text: "htop was started by bash, which belongs to an SSH session that sshd forked when you logged in. The blue path is the chain of parents back to PID 1. The inspector shows the same chain as breadcrumbs.",
+   setup() { loadScenario("boot"); sel = 2399; } },
+ { title: "fork() creates a child", text: "Running a command in bash is two system calls. fork() copies bash into a new process with a new PID, and execve() replaces that copy with the program. The child's PPID points back at bash.",
+   setup() { loadScenario("boot"); run(() => doFork(2261, "sleep 30")); } },
+ { title: "exit() and wait()", text: "Watch the new child. It exits, turns into a zombie for a moment, and bash collects its exit status with wait(). Then the entry disappears. That brief zombie stage happens to every process; it only becomes a problem when nobody reaps it.",
+   setup() { loadScenario("boot"); let c; run(() => { c = doFork(2261, "sleep 30"); }); render(); setTimeout(() => { if (tourIdx === 3) doKill(c, "exit"); }, 700); } },
+ { title: "A parent that never waits", text: "leaky_server.py forks a handler per request but never calls wait(). Three handlers have finished and are stuck as zombies: state Z, shown as <defunct> by ps. They use no CPU or memory, but each holds a PID and a process-table slot. Enough of them and fork() starts failing.",
+   setup() { loadScenario("zombie"); sel = 3301; } },
+ { title: "You cannot kill a zombie", text: "kill -9 on a zombie does nothing. The process has already exited, so there is nothing left to receive the signal. Check the event log for the failed attempt.",
+   setup() { loadScenario("zombie"); sel = 3302; run(() => doKill(3302)); } },
+ { title: "Fix 1: the parent calls wait()", text: "Calling wait(), or installing a SIGCHLD handler that does, collects each exit status and the zombies vanish. This is the real fix: change the program so it reaps its children.",
+   setup() { loadScenario("zombie"); sel = 3301; render(); setTimeout(() => { if (tourIdx === 6) doWait(3301); }, 600); } },
+ { title: "Fix 2: kill the parent", text: "When the parent dies, its zombies and its one live handler are orphaned. The kernel reparents them to PID 1. systemd always calls wait(), so it reaps the zombies at once and adopts the running handler, shown with a dashed amber edge.",
+   setup() { loadScenario("zombie"); sel = 3301; render(); setTimeout(() => { if (tourIdx === 7) { doKill(3301); sel = 3311; render(); } }, 600); } },
+ { title: "Orphans and subreapers", text: "backup.sh crashes while rsync and gzip are still running. They keep running. The kernel looks for the nearest ancestor registered as a child subreaper (here the user's systemd --user) and makes it their new parent instead of PID 1.",
+   setup() { loadScenario("orphan"); sel = 2701; render(); setTimeout(() => { if (tourIdx === 8) { doKill(2701); sel = 2702; render(); } }, 700); } },
+ { title: "Why containers need an init", text: "In its own PID namespace a container's first process is PID 1 and inherits init's job of reaping orphans. Container A runs tini, which reaps everything. Container B runs python as PID 1, which never waits, so a finished curl is stuck as a zombie. docker run --init adds tini for you.",
+   setup() { loadScenario("docker"); sel = 4655; } },
+ { title: "Masters respawn their workers", text: "nginx's master watches its workers. Kill one and the master reaps it on SIGCHLD and forks a replacement with a new PID. Supervisors such as systemd and Kubernetes apply the same idea one level up.",
+   setup() { loadScenario("web"); sel = 845; render(); setTimeout(() => { if (tourIdx === 10) doKill(847); }, 700); } }
+];
+function goTour(i) {
+  if (i < 0 || i >= TOUR.length) { tourIdx = -1; render(); return; }
+  tourIdx = i; TOUR[i].setup(); render();
+  $("#brief").scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+/* ---------- live mode (only when served by server.py) ---------- */
+const DEMO = new Set(["leaky-parent", "zombie-child", "busy-child", "doomed-parent", "orphan-child", "demo-root", "demo-branch", "demo-leaf"]);
+async function probeLive() {
+  if (location.protocol === "file:") return;
+  try {
+    const ctl = new AbortController(); setTimeout(() => ctl.abort(), 2500);
+    const r = await fetch("api/processes", { cache: "no-store", signal: ctl.signal });
+    if (!r.ok) return; const j = await r.json();
+    if (!Array.isArray(j.processes)) return;
+    liveOK = true;
+    liveHasProc = j.has_proc !== false;
+    renderRail();
+    if (location.hash === "#live") loadScenario("live");
+  } catch (_) { /* static hosting: live mode stays hidden */ }
+}
+async function pollLive() {
+  try {
+    const r = await fetch("api/processes", { cache: "no-store" }); const j = await r.json();
+    if (scen !== "live") return;
+    liveHasProc = j.has_proc !== false;
+    const next = new Map();
+    for (const q of j.processes) {
+      const p = mk([q.pid, q.ppid, q.comm, q.cmd, q.user, q.state in STATE ? q.state : "S",
+        { adopted: q.adopted, kernel: q.pid === 2 || q.ppid === 2, sub: q.pid === 1 }]);
+      next.set(p.pid, p);
+    }
+    if (livePrev) {
+      for (const [pid, p] of next) {
+        const o = livePrev.get(pid);
+        if (!o) log("fork", `${tag(p)} appeared (parent ${p.ppid})`);
+        else { if (o.ppid !== p.ppid) log("adopt", `${tag(p)} reparented ${o.ppid} → ${p.ppid}`);
+               if (o.state !== "Z" && p.state === "Z") log("warn", `${tag(p)} exited but was not reaped → zombie`); }
+      }
+      for (const [pid, o] of livePrev) if (!next.has(pid)) log(o.state === "Z" ? "reap" : "exit", `${tag(o)} ${o.state === "Z" ? "reaped" : "exited"}`);
+    } else log("boot", `connected to ${j.host}: ${next.size} processes`);
+    livePrev = next; procs = next;
+    if (sel != null && !procs.has(sel)) sel = null;
+    render();
+  } catch (e) { log("warn", "live poll failed: " + e.message); }
+}
+function startLive() { livePrev = null; pollLive(); liveTimer = setInterval(pollLive, 2000); }
+function stopLive() { if (liveTimer) clearInterval(liveTimer); liveTimer = null; }
+async function post(path, body) {
+  try { const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const j = await r.json(); if (!r.ok) toast(j.error || "Request failed"); else if (j.msg) log("info", j.msg); setTimeout(pollLive, 300); }
+  catch (e) { toast("Server unreachable: " + e.message); }
+}
+
+/* ---------- events ---------- */
+function pick(pid) { sel = pid; render(); }
+document.addEventListener("click", e => {
+  const t = e.target.closest("button, [data-pid]");
+  if (!t) return;
+  if (t.dataset.scen) { tourIdx = -1; loadScenario(t.dataset.scen); return; }
+  if (t.dataset.view) { view = t.dataset.view;
+    document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === view));
+    $("#graph").style.display = view === "graph" ? "" : "none"; $("#textview").hidden = view !== "text"; $("#tableview").hidden = view !== "table";
+    $("#fitBtn").hidden = view !== "graph"; if (view !== "graph") $("#stage").style.height = ""; render(); return; }
+  if (t.dataset.pick) return pick(+t.dataset.pick);
+  if (t.dataset.tour) { const a = t.dataset.tour; goTour(a === "next" ? tourIdx + 1 : a === "prev" ? tourIdx - 1 : -1); return; }
+  if (t.dataset.spawn) return post(t.dataset.spawn === "cleanup" ? "api/cleanup" : "api/spawn", { kind: t.dataset.spawn });
+  if (t.dataset.sig) return post("api/signal", { pid: sel, sig: t.dataset.sig });
+  if (t.dataset.act) {
+    const a = t.dataset.act;
+    if (a === "fork") doFork(sel, $("#forkCmd").value);
+    if (a === "kill") doKill(sel);
+    if (a === "exit") doKill(sel, "exit");
+    if (a === "stop") doStopCont(sel);
+    if (a === "wait") doWait(sel);
+    return;
+  }
+  if (t.dataset.pid) pick(+t.dataset.pid);
+});
+
+/* Search handlers */
+const searchInput = $("#procSearch");
+const clearSearchBtn = $("#clearSearch");
+searchInput.addEventListener("input", () => {
+  searchQuery = searchInput.value.trim();
+  render();
+});
+clearSearchBtn.addEventListener("click", () => {
+  searchInput.value = "";
+  searchQuery = "";
+  searchInput.focus();
+  render();
+});
+
+/* Keyboard shortcuts */
+document.addEventListener("keydown", e => {
+  const inInput = e.target.matches("input, textarea, select");
+  if (inInput) {
+    if (e.key === "Escape") {
+      searchInput.value = "";
+      searchQuery = "";
+      searchInput.blur();
+      render();
+    } else if (e.key === "Enter" && e.target === searchInput && searchQuery) {
+      // Pick first matching
+      const found = [...procs.values()].find(p => isMatched(p));
+      if (found) pick(found.pid);
+    }
+    return;
+  }
+
+  // Global hotkeys
+  if (e.key === "/" && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    searchInput.focus();
+    searchInput.select();
+    return;
+  }
+  if (e.key === "1") { $(`[data-view="graph"]`)?.click(); return; }
+  if (e.key === "2") { $(`[data-view="text"]`)?.click(); return; }
+  if (e.key === "3") { $(`[data-view="table"]`)?.click(); return; }
+  if (e.key === "t" || e.key === "T") {
+    if (tourIdx >= 0) goTour(tourIdx + 1); else goTour(0);
+    return;
+  }
+  if (e.key === "r" || e.key === "R") { $("#resetBtn").click(); return; }
+  if (e.key === "d" || e.key === "D") { toggleTheme(); return; }
+  if (e.key === "f" || e.key === "F") { $("#fitBtn").click(); return; }
+  if (e.key === "?") { $("#shortcutsModal").showModal(); return; }
+
+  const g = e.target.closest && e.target.closest("#nodes g");
+  if (g && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); pick(+g.dataset.pid); }
+  if (e.key === "Escape") {
+    if (sel != null || searchQuery) { sel = null; searchQuery = ""; searchInput.value = ""; render(); }
+  }
+});
+
+document.addEventListener("change", e => {
+  const p = procs.get(sel); if (!p) return;
+  if (e.target.id === "reapsT") { p.reaps = e.target.checked; log("info", `${tag(p)} ${p.reaps ? "now reaps children on SIGCHLD" : "stopped calling wait() (leaky parent)"}`);
+    if (p.reaps) kids(p.pid).filter(c => c.state === "Z").forEach(c => reapSoon(c.pid)); render(); }
+  if (e.target.id === "subT") { p.sub = e.target.checked; log("info", `${tag(p)} prctl(PR_SET_CHILD_SUBREAPER, ${p.sub ? 1 : 0})`); render(); }
+});
+
+$("#nodes").addEventListener("mousedown", e => e.preventDefault());
+$("#nodes").addEventListener("click", e => { const g = e.target.closest("g[data-pid]"); if (g) { e.stopPropagation(); pick(+g.dataset.pid); } });
+$("#resetBtn").onclick = () => { if (tourIdx >= 0) TOUR[tourIdx].setup(); else loadScenario(scen); render(); };
+$("#tourBtn").onclick = () => goTour(0);
+$("#themeBtn").onclick = toggleTheme;
+$("#clearLog").onclick = clearLog;
+$("#copyLog").onclick = copyLogToClipboard;
+$("#shortcutsBtn").onclick = () => $("#shortcutsModal").showModal();
+$("#closeShortcuts").onclick = () => $("#shortcutsModal").close();
+$("#shortcutsModal").addEventListener("click", e => { if (e.target === $("#shortcutsModal")) $("#shortcutsModal").close(); });
+
+$("#fitBtn").onclick = e => { const on = $("#stage").classList.toggle("fit"); e.currentTarget.setAttribute("aria-pressed", on); e.currentTarget.textContent = on ? "Actual size" : "Fit to width"; renderGraph(); };
+
+initTheme();
+loadScenario("boot");
+probeLive();
+})();
+</script>
+</body>
+</html>

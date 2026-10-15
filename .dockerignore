@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.pyo
+*.zip
+download_fonts.py
+.git/
+.gitignore

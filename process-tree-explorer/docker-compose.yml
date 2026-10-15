@@ -1,0 +1,8 @@
+services:
+  explorer:
+    build: .
+    image: process-tree-explorer
+    ports:
+      - "8080:8080"
+    init: false   # tini is already PID 1 via the image's ENTRYPOINT
+    restart: unless-stopped
