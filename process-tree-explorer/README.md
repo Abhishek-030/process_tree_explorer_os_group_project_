@@ -14,7 +14,13 @@ An interactive site that visualises Linux process hierarchies: parent/child rela
 | `PRESENTER_SCRIPT.md` | A complete 12–15 minute presentation talk track with step-by-step cues, demo script, and audience Q&A. |
 | `process-tree-explorer.zip` | Standalone packaged archive ready for distribution and submission. |
 
-## Run it
+## Run & Deploy
+
+**Live Site (GitHub Pages):**
+You can deploy and access this site directly on GitHub Pages at:
+👉 **`https://abhishek-030.github.io/process_tree_explorer_os_group_project_/`**
+
+*(To enable: In your repository, go to **Settings** → **Pages** → under **Build and deployment > Source**, select **GitHub Actions**).*
 
 **With Docker (recommended for full Live mode):**
 
